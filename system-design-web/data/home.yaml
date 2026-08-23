@@ -1,0 +1,33 @@
+sections:
+  - hero
+  - cards
+
+hero:
+  eyebrow: 简体中文在线书籍
+  title: 系统设计
+  desc: 从基础扩展方法到股票交易所，按 01—28 的顺序系统学习系统设计。
+  align: center
+  actions:
+    - label: 开始阅读
+      url: /system-design/
+      icon: fa-solid fa-book-open
+      style: primary
+    - label: 查看 GitHub 仓库
+      url: https://github.com/Ariana-Yang/system-design-notes-zh
+      icon: fa-brands fa-github
+      style: ghost
+      external: true
+
+cards:
+  title: 在线阅读体验
+  columns: 3
+  items:
+    - title: 28 个章节
+      desc: 章节按照原书编号依次排列，适合从头阅读或按需查阅。
+      icon: fa-solid fa-list-ol
+    - title: 本地全文搜索
+      desc: 使用站内搜索快速定位系统设计概念、组件和案例。
+      icon: fa-solid fa-magnifying-glass
+    - title: 书籍阅读模式
+      desc: 支持章节导航、深色模式和整本书打印页面。
+      icon: fa-solid fa-book

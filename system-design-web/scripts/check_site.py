@@ -16,6 +16,7 @@ from urllib.parse import unquote
 SITE_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = SITE_ROOT.parent / "system-design-translated"
 BOOK_ROOT = SITE_ROOT / "content" / "system-design"
+HOME_DATA = SITE_ROOT / "data" / "home.yaml"
 EXPECTED_SOURCE_FILES = 420
 EXPECTED_SOURCE_TREE_SHA256 = (
     "3F52A315EC9AE5D81E5B51235632AC27C0E97B5CDBA5BA5D2094132E52D9C3A5"
@@ -418,6 +419,20 @@ def main() -> int:
             "system-design-translated changed: "
             f"files={source_count}, sha256={source_digest}"
         )
+
+    if not HOME_DATA.is_file():
+        errors.append(f"OINK home data is missing: {HOME_DATA}")
+    else:
+        home_data = HOME_DATA.read_text(encoding="utf-8")
+        required_home_patterns = {
+            "sections list": r"(?m)^sections:\s*$",
+            "hero section": r"(?m)^\s*-\s*hero\s*$",
+            "hero data": r"(?m)^hero:\s*$",
+            "book link": r"(?m)^\s+url:\s*/system-design/?\s*$",
+        }
+        for label, pattern in required_home_patterns.items():
+            if not re.search(pattern, home_data):
+                errors.append(f"OINK home data has no {label}: {HOME_DATA}")
 
     if not BOOK_ROOT.is_dir():
         errors.append(f"target book root is missing: {BOOK_ROOT}")
