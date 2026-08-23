@@ -1,0 +1,73 @@
+baseURL: https://example.org/
+title: 系统设计
+defaultContentLanguage: zh
+defaultContentLanguageInSubdir: false
+enableRobotsTXT: true
+disableKinds: [taxonomy, term]
+
+module:
+  hugoVersion:
+    extended: true
+    min: 0.160.1
+  imports:
+    - path: github.com/pgsty/oink
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+    parser:
+      wrapStandAloneImageWithinParagraph: false
+      attribute:
+        block: true
+    extensions:
+      passthrough:
+        enable: true
+        delimiters:
+          block: [['\[', '\]'], ['$$', '$$']]
+          inline: [['\(', '\)']]
+
+outputs:
+  home: [HTML, RSS, markdown, LLMS]
+  section: [HTML, RSS, print, markdown]
+  page: [HTML, markdown]
+
+params:
+  description: 系统设计与分布式系统在线书籍
+  hugoMinVersion: 0.160.1
+  page_width: wide
+  reading_width: wide
+  offline_search: true
+  offline_search_on_serve: true
+  offline_search_index: content
+  copyright:
+    authors: 系统设计文档
+    from_year: 2026
+  ui:
+    dark_mode:
+      show_menu: true
+    navbar_autohide: false
+    sidebar_menu_compact: true
+    sidebar_menu_foldable: true
+    sidebar_icon_policy: groups
+    sidebar_headings: 3
+    image_zoom: true
+
+languages:
+  zh:
+    label: 简体中文
+    locale: zh-CN
+    languageCode: zh-CN
+    hasCJKLanguage: true
+    weight: 1
+    title: 系统设计
+    params:
+      description: 系统设计与分布式系统在线书籍
+    menus:
+      main:
+        - identifier: system-design
+          name: 系统设计
+          pageRef: /system-design
+          weight: 10
+          params:
+            icon: fa-solid fa-book

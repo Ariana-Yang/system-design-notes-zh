@@ -1,0 +1,9 @@
+system-design-notes-main/
+
+system-design-web/public/
+system-design-web/resources/
+system-design-web/.hugo_build.lock
+system-design-web/content/system-design/[0-2][0-9]-*/
+
+**/__pycache__/
+*.py[cod]
