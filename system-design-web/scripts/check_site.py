@@ -3,20 +3,23 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import re
 import sys
 import unicodedata
 from collections.abc import Callable
+from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, urljoin
 
 
 SITE_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = SITE_ROOT.parent / "system-design-translated"
 BOOK_ROOT = SITE_ROOT / "content" / "system-design"
 HOME_DATA = SITE_ROOT / "data" / "home.yaml"
+PUBLIC_ROOT = SITE_ROOT / "public"
 EXPECTED_SOURCE_FILES = 420
 EXPECTED_SOURCE_TREE_SHA256 = (
     "3F52A315EC9AE5D81E5B51235632AC27C0E97B5CDBA5BA5D2094132E52D9C3A5"
@@ -38,6 +41,24 @@ HTML_IMAGE_RE = re.compile(
     r"<img\b[^>]*\bsrc\s*=\s*(['\"])(.*?)\1", re.IGNORECASE
 )
 EXTERNAL_URL_RE = re.compile(r"https?://[^\s<>\"')\]]+")
+
+
+class HomePageParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.canonical = ""
+        self.primary_actions: list[str] = []
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        attributes = dict(attrs)
+        if tag == "link" and "canonical" in (attributes.get("rel") or "").split():
+            self.canonical = attributes.get("href") or ""
+        if tag == "a" and "td-landing-button--primary" in (
+            attributes.get("class") or ""
+        ).split():
+            self.primary_actions.append(attributes.get("href") or "")
 
 
 def source_tree_digest(root: Path) -> tuple[int, str]:
@@ -410,7 +431,32 @@ def relative_resource_manifest(root: Path) -> dict[str, str]:
     return manifest
 
 
-def main() -> int:
+def check_built_home(errors: list[str]) -> None:
+    home_page = PUBLIC_ROOT / "index.html"
+    if not home_page.is_file():
+        errors.append(f"built home page is missing: {home_page}")
+        return
+    parser = HomePageParser()
+    parser.feed(home_page.read_text(encoding="utf-8"))
+    if not parser.canonical:
+        errors.append(f"built home page has no canonical URL: {home_page}")
+        return
+    if len(parser.primary_actions) != 1:
+        errors.append(
+            "built home page must have exactly one primary action: "
+            f"found {len(parser.primary_actions)} in {home_page}"
+        )
+        return
+    expected = urljoin(parser.canonical, "system-design/")
+    actual = urljoin(parser.canonical, parser.primary_actions[0])
+    if actual != expected:
+        errors.append(
+            "built home page primary action does not target the deployed book: "
+            f"{actual}, expected {expected}"
+        )
+
+
+def main(check_public: bool = False) -> int:
     errors: list[str] = []
     chapters = discover_source_chapters(errors)
     source_count, source_digest = source_tree_digest(SOURCE_ROOT) if SOURCE_ROOT.is_dir() else (0, "")
@@ -428,7 +474,6 @@ def main() -> int:
             "sections list": r"(?m)^sections:\s*$",
             "hero section": r"(?m)^\s*-\s*hero\s*$",
             "hero data": r"(?m)^hero:\s*$",
-            "book link": r"(?m)^\s+url:\s*/system-design/?\s*$",
         }
         for label, pattern in required_home_patterns.items():
             if not re.search(pattern, home_data):
@@ -540,6 +585,9 @@ def main() -> int:
         if source_resources != target_resources:
             errors.append(f"static resource manifest changed: {target_chapter}")
 
+    if check_public:
+        check_built_home(errors)
+
     if errors:
         print("CHECK FAILED")
         for error in errors:
@@ -554,4 +602,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument(
+        "--public", action="store_true", help="also validate the rendered public site"
+    )
+    arguments = argument_parser.parse_args()
+    raise SystemExit(main(check_public=arguments.public))

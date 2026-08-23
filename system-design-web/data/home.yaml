@@ -9,7 +9,7 @@ hero:
   align: center
   actions:
     - label: 开始阅读
-      url: /system-design/
+      url: system-design/
       icon: fa-solid fa-book-open
       style: primary
     - label: 查看 GitHub 仓库
